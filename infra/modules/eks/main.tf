@@ -43,6 +43,27 @@ resource "aws_eks_cluster" "main" {
   }
 }
 
+resource "aws_launch_template" "workers" {
+  name_prefix = "${var.project_name}-workers-"
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "${var.project_name}-worker"
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_eks_node_group" "workers" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.project_name}-workers"
@@ -50,6 +71,11 @@ resource "aws_eks_node_group" "workers" {
   subnet_ids      = var.subnet_ids
 
   instance_types = [var.node_instance_type]
+
+  launch_template {
+    id      = aws_launch_template.workers.id
+    version = aws_launch_template.workers.latest_version
+  }
 
   scaling_config {
     desired_size = var.node_desired
