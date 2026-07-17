@@ -1,0 +1,22 @@
+aws_region   = "us-east-1"
+project_name = "solidarytech"
+environment  = "production"
+db_password  = "CHANGE-ME"
+
+# Networking
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# EKS — leaner lab: 2 nodes t3.medium (min 1, max 4)
+eks_cluster_version    = "1.31"
+eks_node_instance_type = "t3.medium"
+eks_node_desired       = 2
+eks_node_min           = 1
+eks_node_max           = 4
+
+# RDS — leaner lab: db.t3.micro, single-AZ (ver módulo rds)
+db_instance_class = "db.t3.micro"
+db_username       = "app"
+
+# Services (ECR)
+services = ["ngo", "donation", "volunteer"]

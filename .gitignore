@@ -1,0 +1,21 @@
+.claude
+
+# Ambiente local
+.env
+.env.*
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+
+# Binários Go compilados localmente (ex: `go build -o donation-service .`)
+donation-service/donation-service

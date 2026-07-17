@@ -1,0 +1,21 @@
+name: CI - Donation Service
+
+on:
+  push:
+    branches: [main]
+    paths: ["donation-service/**"]
+  pull_request:
+    branches: [main]
+    paths: ["donation-service/**"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    with:
+      service_name: donation-service
+      service_path: donation-service
+      language: go
+      ecr_repository: solidarytech/donation-service
+      sonar_project_key: solidarytech-donation-service
+      gitops_path: apps/donation-service
+    secrets: inherit

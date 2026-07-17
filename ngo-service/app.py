@@ -69,6 +69,22 @@ def get_ngos():
     finally:
         pool.putconn(conn)
 
+@app.route('/ngos/<int:ngo_id>', methods=['GET'])
+def get_ngo(ngo_id):
+    conn = pool.getconn()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM ngos WHERE id = %s", (ngo_id,))
+            ngo = cur.fetchone()
+            if not ngo:
+                return jsonify({"error": "ONG não encontrada"}), 404
+            return jsonify(ngo), 200
+    except Exception as e:
+        log.error(f"Erro ao buscar ONG {ngo_id}: {e}")
+        return jsonify({"error": "Erro interno"}), 500
+    finally:
+        pool.putconn(conn)
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 8081))
     app.run(host='0.0.0.0', port=port)

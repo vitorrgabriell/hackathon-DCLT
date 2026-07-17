@@ -22,7 +22,8 @@ if not DYNAMODB_TABLE:
     sys.exit(1)
 
 try:
-    dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+    dynamodb_endpoint = os.getenv("AWS_DYNAMODB_ENDPOINT")
+    dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION, endpoint_url=dynamodb_endpoint)
     table = dynamodb.Table(DYNAMODB_TABLE)
     log.info(f"Conectado à tabela DynamoDB: {DYNAMODB_TABLE}")
 except Exception as e:
@@ -58,8 +59,6 @@ def register_volunteer():
 @app.route('/volunteers/<int:ngo_id>', methods=['GET'])
 def get_volunteers_by_ngo(ngo_id):
     try:
-        # Nota para avaliação dos alunos: Operação Scan simplificada para fins de desenvolvimento.
-        # Em cenários complexos de produção, índices globais secundários (GSI) seriam exigidos.
         response = table.scan(
             FilterExpression=boto3.dynamodb.conditions.Attr('ngo_id').eq(ngo_id)
         )

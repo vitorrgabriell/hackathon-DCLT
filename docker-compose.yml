@@ -1,0 +1,170 @@
+name: solidarytech
+
+
+services:
+  postgres-ngo:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ngo_db
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - pg_ngo_data:/var/lib/postgresql/data
+      - ./ngo-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d ngo_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [solidarytech]
+
+  postgres-donation:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: donation_db
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - pg_donation_data:/var/lib/postgresql/data
+      - ./donation-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d donation_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [solidarytech]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    networks: [solidarytech]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.local.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - jaeger
+    networks: [solidarytech]
+
+  localstack:
+    image: localstack/localstack:3.8
+    environment:
+      SERVICES: dynamodb,sqs
+      DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_ENDPOINT_STRATEGY: path
+    volumes:
+      - ./localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks: [solidarytech]
+
+  ngo-service:
+    build: ./ngo-service
+    environment:
+      PORT: 8081
+      DATABASE_URL: postgres://app:app@postgres-ngo:5432/ngo_db
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SERVICE_NAME: ngo-service
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=solidarytech,deployment.environment=local
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres-ngo:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [solidarytech]
+
+  donation-service:
+    build: ./donation-service
+    environment:
+      PORT: 8082
+      DATABASE_URL: postgres://app:app@postgres-donation:5432/donation_db
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_SQS_URL: http://localstack:4566/000000000000/solidary-donations
+      AWS_SQS_ENDPOINT: http://localstack:4566
+      NGO_SERVICE_URL: http://ngo-service:8081
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SERVICE_NAME: donation-service
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=solidarytech,deployment.environment=local
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres-donation:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      ngo-service:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+    networks: [solidarytech]
+
+  volunteer-service:
+    build: ./volunteer-service
+    environment:
+      PORT: 8083
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DYNAMODB_TABLE: SolidaryTechVolunteers
+      AWS_DYNAMODB_ENDPOINT: http://localstack:4566
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SERVICE_NAME: volunteer-service
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=solidarytech,deployment.environment=local
+    ports:
+      - "8083:8083"
+    depends_on:
+      localstack:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [solidarytech]
+
+  volunteer-consumer:
+    build: ./volunteer-service
+    command: ["opentelemetry-instrument", "python", "consumer.py"]
+    environment:
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DYNAMODB_TABLE: SolidaryTechVolunteers
+      AWS_DYNAMODB_ENDPOINT: http://localstack:4566
+      AWS_SQS_URL: http://localstack:4566/000000000000/solidary-donations
+      AWS_SQS_ENDPOINT: http://localstack:4566
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SERVICE_NAME: volunteer-service-consumer
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=solidarytech,deployment.environment=local
+    healthcheck:
+      disable: true
+    depends_on:
+      localstack:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [solidarytech]
+
+networks:
+  solidarytech:
+
+volumes:
+  pg_ngo_data:
+  pg_donation_data:
+  localstack_data:

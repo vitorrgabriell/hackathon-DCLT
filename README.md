@@ -293,6 +293,40 @@ Ferramentas sugeridas:
 - ArgoCD
 - FluxCD
 
+## Implementado: pipelines GitHub Actions
+
+Um workflow reutilizável (`.github/workflows/ci-reusable.yml`) chamado por um
+wrapper fino por serviço (`ci-ngo.yml`, `ci-donation.yml`,
+`ci-volunteer.yml`), cada um disparado só quando o path daquele serviço muda.
+Cada pipeline roda, nessa ordem: **testes** → **Sonar (SAST de código)** em
+paralelo → **build da imagem Docker** → **Trivy (scan da imagem)** → **push
+no ECR** → **update-gitops** (só em push na `main`; PRs param no scan). O
+pipeline **falha** se o Trivy achar vulnerabilidade `CRITICAL` ou `HIGH` — a
+imagem não chega a ser publicada nesse caso, e o `update-gitops` nem roda.
+
+### Secrets necessários (Settings → Secrets and variables → Actions)
+
+| Secret | Descrição |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | Credencial AWS Academy |
+| `AWS_SECRET_ACCESS_KEY` | Credencial AWS Academy |
+| `AWS_SESSION_TOKEN` | Token de sessão AWS Academy — **expira em poucas horas**; se o job `build-and-push` começar a falhar com erro de autenticação, é isso, reexporte as 3 credenciais novas |
+| `SONAR_TOKEN` | Token de autenticação no SonarCloud/SonarQube |
+| `SONAR_HOST_URL` | Só necessário se usar SonarQube self-hosted (SonarCloud não precisa) |
+| `SONAR_ORGANIZATION` | Só usado pelo SonarCloud |
+| `GITOPS_TOKEN` | PAT do GitHub (escopo `repo`) com push no repo `solidarytech-gitops` |
+
+### GitOps — ArgoCD
+
+O último job do pipeline (`update-gitops`) atualiza a tag da imagem em
+[`solidarytech-gitops`](https://github.com/vitorrgabriell/solidarytech-gitops)
+(`apps/<service>/deployment.yaml`) e dá push. O ArgoCD, rodando no cluster
+EKS com `syncPolicy.automated` (`prune` + `selfHeal`), detecta o commit e
+aplica sozinho — fluxo completo (diagrama, estrutura, bootstrap) documentado
+no README daquele repo. **A partir daqui, [`k8s/`](k8s/) neste repo deixou de
+ser a fonte de verdade do cluster** — fica só como referência/ponto de
+partida (ver aviso no topo de [`k8s/README.md`](k8s/README.md)).
+
 ---
 
 # 📊 Observabilidade
@@ -310,6 +344,37 @@ Ferramentas sugeridas:
 - Prometheus
 - Datadog
 - New Relic
+
+## Implementado
+
+Mesma arquitetura da Fase 4 (`togglemaster`): OTel Collector como hub
+central (`memory_limiter` + `batch` + `resource` processors), métricas via
+kube-prometheus-stack, logs via loki-stack (Loki + Promtail), APM
+**Datadog**. Stack completa (Helm charts via ArgoCD Application, conta de
+capacidade do cluster leaner lab) documentada em
+[`solidarytech-gitops/monitoring/README.md`](https://github.com/vitorrgabriell/solidarytech-gitops/blob/main/monitoring/README.md).
+
+- **ngo-service** e **volunteer-service**: auto-instrumentados
+  (`opentelemetry-distro` + `opentelemetry-instrument`, sem código manual —
+  ver Dockerfiles).
+- **donation-service** (hot path): instrumentação manual —
+  `otelhttp.NewHandler` no handler HTTP, span dedicado
+  (`db.insert_donation`) em volta do insert no Postgres, e
+  `otelhttp.NewTransport` na chamada ao ngo-service.
+
+**Uma requisição de doação atravessa os 3 serviços num trace só:**
+`donation-service` valida o `ngo_id` chamando `GET /ngos/{id}` no
+`ngo-service` (hop síncrono, trace propagado via header HTTP `traceparent`)
+e publica um evento no SQS com o trace context injetado como *message
+attributes*; o `volunteer-consumer` (processo novo, mesma imagem do
+`volunteer-service`) extrai esse contexto e abre um span
+`process_donation_event` como filho do mesmo trace — ver o passo a passo
+completo em
+[`monitoring/README.md`](https://github.com/vitorrgabriell/solidarytech-gitops/blob/main/monitoring/README.md#como-o-trace-atravessa-os-3-serviços).
+
+Localmente (`docker-compose.yml`), o Jaeger substitui o Datadog como
+backend de visualização de traces — não precisa de API key pra validar a
+propagação de ponta a ponta na sua máquina.
 
 ---
 

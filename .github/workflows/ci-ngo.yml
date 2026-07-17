@@ -1,0 +1,21 @@
+name: CI - NGO Service
+
+on:
+  push:
+    branches: [main]
+    paths: ["ngo-service/**"]
+  pull_request:
+    branches: [main]
+    paths: ["ngo-service/**"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    with:
+      service_name: ngo-service
+      service_path: ngo-service
+      language: python
+      ecr_repository: solidarytech/ngo-service
+      sonar_project_key: solidarytech-ngo-service
+      gitops_path: apps/ngo-service
+    secrets: inherit

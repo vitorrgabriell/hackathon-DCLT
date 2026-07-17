@@ -1,0 +1,21 @@
+name: CI - Volunteer Service
+
+on:
+  push:
+    branches: [main]
+    paths: ["volunteer-service/**"]
+  pull_request:
+    branches: [main]
+    paths: ["volunteer-service/**"]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    with:
+      service_name: volunteer-service
+      service_path: volunteer-service
+      language: python
+      ecr_repository: solidarytech/volunteer-service
+      sonar_project_key: solidarytech-volunteer-service
+      gitops_path: apps/volunteer-service
+    secrets: inherit
