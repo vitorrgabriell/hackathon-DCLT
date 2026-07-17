@@ -97,6 +97,16 @@ Ver [`../k8s/README.md`](../k8s/README.md) — inclui como ligar os outputs
 deste Terraform (`rds_endpoints`, `sqs_queue_url`, `ecr_repository_urls`,
 `aws_account_id`) aos Secrets/ConfigMaps/Deployments.
 
+## Automatizando os passos 4-6 (kubeconfig → schema SQL → build/push → gitops → monitoring)
+
+```bash
+GITOPS_DIR=../../solidarytech-gitops ./scripts/redeploy-after-apply.sh
+```
+
+Idempotente — pode rodar de novo a qualquer momento (ex: depois de recriar tudo com
+`terraform apply` numa nova sessão do Learner Lab). Assume Docker, `jq` e AWS CLI já
+configurados com credenciais válidas.
+
 ## Módulos
 
 | Módulo | Recursos criados |
