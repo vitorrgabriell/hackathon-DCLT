@@ -394,6 +394,20 @@ Definir:
 
 O `donation-service` deve ser tratado como componente crítico da plataforma.
 
+## Implementado
+
+- **SLIs/SLOs do donation-service** (hot path): 2 SLIs sobre as Golden Metrics
+  — latência (99.9% < 300ms) e disponibilidade (99.9% sem 5xx), janela de 30d,
+  error budget de 0.1% (43m12s). Definições, queries PromQL e racional em
+  [`docs/sre/slo-donation-service.md`](docs/sre/slo-donation-service.md).
+- **Recording rules + alertas multi-window/multi-burn-rate** (padrão Google
+  SRE Workbook) e **dashboard Grafana dedicado a SRE** (`SRE — donation-service
+  SLOs`: conformidade dos SLOs, error budget restante e burn rate) —
+  provisionados via GitOps em
+  [`solidarytech-gitops/monitoring/dashboards/`](https://github.com/vitorrgabriell/solidarytech-gitops/tree/main/monitoring/dashboards).
+- **MTTR**: como a stack de observabilidade + alertas reduz detecção/resposta a
+  incidentes — [`docs/sre/mttr.md`](docs/sre/mttr.md).
+
 ---
 
 # 📚 Tecnologias Envolvidas

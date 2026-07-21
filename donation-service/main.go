@@ -56,6 +56,17 @@ func main() {
 		}()
 	}
 
+	meterShutdown, err := initMeter(ctx)
+	if err != nil {
+		log.Printf("Falha ao iniciar métricas OpenTelemetry: %v", err)
+	} else {
+		defer func() {
+			if err := meterShutdown(ctx); err != nil {
+				log.Printf("Erro no shutdown do meter: %v", err)
+			}
+		}()
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8082"
@@ -103,8 +114,8 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", app.HealthHandler)
-	mux.HandleFunc("/donations", app.DonationHandler)
+	mux.Handle("/health", otelhttp.WithRouteTag("/health", http.HandlerFunc(app.HealthHandler)))
+	mux.Handle("/donations", otelhttp.WithRouteTag("/donations", http.HandlerFunc(app.DonationHandler)))
 
 	handler := otelhttp.NewHandler(mux, "donation-service")
 
