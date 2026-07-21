@@ -50,3 +50,8 @@ output "aws_account_id" {
   description = "Account ID atual (útil para montar URIs de imagem ECR nos manifests k8s)"
   value       = data.aws_caller_identity.current.account_id
 }
+
+output "velero_bucket_name" {
+  description = "Bucket S3 dos backups de DR do Velero"
+  value       = module.backup.velero_bucket_name
+}

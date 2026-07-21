@@ -54,6 +54,18 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
+  # --- DR / continuidade dos dados de doação ---
+  # Backups automáticos habilitam Point-In-Time Recovery (PITR): o RDS passa a
+  # arquivar os transaction logs continuamente, permitindo restaurar para
+  # qualquer segundo dentro da janela de retenção. É isso que dá o RPO de ~5min
+  # dos dados de doação (ver docs/dr/pcn.md). Com retention=0 (default anterior)
+  # NÃO havia backup nenhum — RPO era infinito.
+  backup_retention_period = var.backup_retention_days
+  copy_tags_to_snapshot   = true
+  # apply_immediately: no lab, aplica a mudança de backup na hora (breve reboot
+  # do RDS ao ligar/desligar backups) em vez de esperar a janela de manutenção.
+  apply_immediately = true
+
   skip_final_snapshot = true
   publicly_accessible = false
   multi_az            = false

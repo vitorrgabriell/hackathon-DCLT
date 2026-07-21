@@ -51,3 +51,10 @@ module "ecr" {
   project_name = var.project_name
   services     = var.services
 }
+
+module "backup" {
+  source = "./modules/backup"
+
+  project_name = var.project_name
+  account_id   = data.aws_caller_identity.current.account_id
+}

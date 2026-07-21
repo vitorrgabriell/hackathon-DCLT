@@ -32,3 +32,9 @@ variable "allowed_sg_id" {
   description = "Security Group ID autorizado a acessar o RDS (SG do cluster EKS)"
   type        = string
 }
+
+variable "backup_retention_days" {
+  description = "Dias de retenção dos backups automáticos do RDS. >0 habilita PITR (RPO ~5min dos dados de doação). 0 desliga backups."
+  type        = number
+  default     = 7
+}

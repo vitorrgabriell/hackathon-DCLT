@@ -419,6 +419,14 @@ O `donation-service` deve ser tratado como componente crítico da plataforma.
   [`solidarytech-gitops/monitoring/dashboards/`](https://github.com/vitorrgabriell/solidarytech-gitops/tree/main/monitoring/dashboards).
 - **MTTR**: como a stack de observabilidade + alertas reduz detecção/resposta a
   incidentes — [`docs/sre/mttr.md`](docs/sre/mttr.md).
+- **Plano de Continuidade de Negócios (PCN) + DR**: RTO/RPO dos dados de doação
+  (RPO 5min via PITR do RDS, RTO 1h) com justificativa técnica
+  ([`docs/dr/pcn.md`](docs/dr/pcn.md)) e a estratégia de DR implementada —
+  **Velero → S3** pro estado do cluster ([`scripts/install-velero.sh`](scripts/install-velero.sh))
+  + backups automáticos/PITR do RDS ([`infra/modules/rds`](infra/modules/rds) e
+  [`infra/modules/backup`](infra/modules/backup)). Evidências reais do drill
+  (backup, restore funcional, PITR) em
+  [`docs/dr/dr-drill-evidence.md`](docs/dr/dr-drill-evidence.md).
 
 ---
 
