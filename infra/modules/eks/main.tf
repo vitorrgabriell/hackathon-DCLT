@@ -38,8 +38,7 @@ resource "aws_eks_cluster" "main" {
   }
 
   tags = {
-    Name        = "${var.project_name}-eks"
-    Environment = var.environment
+    Name = "${var.project_name}-eks"
   }
 }
 
@@ -88,8 +87,7 @@ resource "aws_eks_node_group" "workers" {
   }
 
   tags = {
-    Name        = "${var.project_name}-workers"
-    Environment = var.environment
+    Name = "${var.project_name}-workers"
   }
 
   depends_on = [aws_eks_cluster.main]

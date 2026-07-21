@@ -9,8 +9,7 @@ resource "aws_dynamodb_table" "volunteers" {
   }
 
   tags = {
-    Name        = "${var.project_name}-volunteers"
-    Environment = var.environment
-    Service     = "volunteer-service"
+    Name    = "${var.project_name}-volunteers"
+    Service = "volunteer-service"
   }
 }

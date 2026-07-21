@@ -10,8 +10,7 @@ resource "aws_ecr_repository" "services" {
   }
 
   tags = {
-    Name        = "${var.project_name}/${each.value}-service"
-    Environment = var.environment
+    Name = "${var.project_name}/${each.value}-service"
   }
 }
 

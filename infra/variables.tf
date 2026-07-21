@@ -10,12 +10,6 @@ variable "project_name" {
   default     = "solidarytech"
 }
 
-variable "environment" {
-  description = "Nome do ambiente"
-  type        = string
-  default     = "production"
-}
-
 variable "vpc_cidr" {
   description = "CIDR block da VPC"
   type        = string

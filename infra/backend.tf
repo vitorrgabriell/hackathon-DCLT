@@ -18,4 +18,17 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+
+  # Política de tags obrigatória — aplicada globalmente a TODOS os recursos que
+  # suportam tagging. Centralizar aqui (em vez de repetir por recurso) garante
+  # que nenhum recurso novo escape da política e evita divergência de valores
+  # (ex: "production" vs "Production"). Tags específicas de recurso (Name,
+  # Service) continuam nos módulos e são mescladas com estas.
+  default_tags {
+    tags = {
+      Project     = "SolidaryTech"
+      Environment = "Production"
+      CostCenter  = "NGO-Core"
+    }
+  }
 }

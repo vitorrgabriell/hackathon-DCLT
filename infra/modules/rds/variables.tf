@@ -2,10 +2,6 @@ variable "project_name" {
   type = string
 }
 
-variable "environment" {
-  type = string
-}
-
 variable "db_names" {
   description = "Lista de nomes de serviço (ngo, donation) — vira db_name '<nome>_db'"
   type        = list(string)

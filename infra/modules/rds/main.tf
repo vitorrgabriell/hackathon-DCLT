@@ -59,8 +59,7 @@ resource "aws_db_instance" "main" {
   multi_az            = false
 
   tags = {
-    Name        = "${var.project_name}-${var.db_names[count.index]}-db"
-    Environment = var.environment
-    Service     = "${var.db_names[count.index]}-service"
+    Name    = "${var.project_name}-${var.db_names[count.index]}-db"
+    Service = "${var.db_names[count.index]}-service"
   }
 }
