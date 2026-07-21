@@ -276,6 +276,18 @@ Implementar:
 - Rightsizing
 - Budgets e alertas financeiros
 
+### Implementado
+
+- **Política de tags obrigatória** via `default_tags` no provider AWS
+  ([`infra/backend.tf`](infra/backend.tf)): `Project=SolidaryTech`,
+  `Environment=Production`, `CostCenter=NGO-Core` em todos os recursos.
+- **Rightsizing baseado em uso real** — requests/limits dos 3 serviços
+  ajustados a partir do working set/CPU medidos no Prometheus
+  ([`scripts/rightsizing-metrics.sh`](scripts/rightsizing-metrics.sh) coleta os
+  percentis; reserva de CPU do cluster caiu ~46%).
+- **Forecast de custo mensal + otimização** (Spot como recomendação principal,
+  ~26% de economia): [`docs/finops/cost-forecast.md`](docs/finops/cost-forecast.md).
+
 ---
 
 # 🔄 CI/CD & GitOps
