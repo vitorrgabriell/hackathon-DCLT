@@ -90,7 +90,11 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          # A sonarqube-scan-action NÃO assume o SonarCloud por padrão — sem host
+          # explícito ela monta uma URL sem scheme e falha com "Failed to get
+          # server version". Default pro SonarCloud; defina o secret só se for
+          # usar SonarQube self-hosted.
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
         with:
           projectBaseDir: ${{ inputs.service_path }}
           args: >

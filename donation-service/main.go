@@ -115,6 +115,7 @@ func main() {
 
 	// WithRouteTag marca o http.route em cada handler — é o que permite os SLIs
 	// filtrarem só /donations, excluindo o ruído das probes em /health.
+	// Ver docs/sre/slo-donation-service.md.
 	mux := http.NewServeMux()
 	mux.Handle("/health", otelhttp.WithRouteTag("/health", http.HandlerFunc(app.HealthHandler)))
 	mux.Handle("/donations", otelhttp.WithRouteTag("/donations", http.HandlerFunc(app.DonationHandler)))
