@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -15,6 +17,19 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
+
+// withRouteTag substitui o otelhttp.WithRouteTag, removido a partir da v0.69 do
+// otelhttp. Injeta o atributo http.route nas métricas via Labeler (o handler do
+// otelhttp repassa labeler.Get() como AdditionalAttributes), preservando o label
+// http_route de que os SLIs dependem pra filtrar só /donations e descartar o
+// ruído das probes em /health. Ver docs/sre/slo-donation-service.md.
+func withRouteTag(route string, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		labeler, _ := otelhttp.LabelerFromContext(r.Context())
+		labeler.Add(semconv.HTTPRoute(route))
+		h.ServeHTTP(w, r)
+	})
+}
 
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	serviceName := os.Getenv("OTEL_SERVICE_NAME")

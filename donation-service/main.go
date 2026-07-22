@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -117,8 +117,8 @@ func main() {
 	// filtrarem só /donations, excluindo o ruído das probes em /health.
 	// Ver docs/sre/slo-donation-service.md.
 	mux := http.NewServeMux()
-	mux.Handle("/health", otelhttp.WithRouteTag("/health", http.HandlerFunc(app.HealthHandler)))
-	mux.Handle("/donations", otelhttp.WithRouteTag("/donations", http.HandlerFunc(app.DonationHandler)))
+	mux.Handle("/health", withRouteTag("/health", http.HandlerFunc(app.HealthHandler)))
+	mux.Handle("/donations", withRouteTag("/donations", http.HandlerFunc(app.DonationHandler)))
 
 	handler := otelhttp.NewHandler(mux, "donation-service")
 

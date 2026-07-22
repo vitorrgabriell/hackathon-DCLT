@@ -1,5 +1,5 @@
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN go mod download
 COPY main.go otel.go ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-w -s" -o /out/donation-service .
 
-FROM alpine:3.19 AS runtime
+FROM alpine:3.22 AS runtime
 
 RUN apk add --no-cache ca-certificates && \
     addgroup -S -g 1000 app && \
