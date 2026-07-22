@@ -175,7 +175,18 @@ jobs:
           IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
 
           for f in gitops/${{ inputs.gitops_path }}/deployment*.yaml; do
-            sed -i "s|\(image:.*${{ inputs.ecr_repository }}:\)[^ ]*|\1${IMAGE_TAG}|" "$f"
+            # [^"[:space:]]* em vez de [^ ]*: a aspa de fechamento NÃO é espaço,
+            # então [^ ]* engolia o `"` do final e gerava YAML inválido
+            # (image: "...:tag sem fechar). Os jobs passavam verdes e o ArgoCD
+            # ficava sem conseguir parsear o manifesto.
+            sed -i "s|\(image:.*${{ inputs.ecr_repository }}:\)[^\"[:space:]]*|\1${IMAGE_TAG}|" "$f"
+          done
+
+          # Falha cedo se o manifesto tiver saído inválido, em vez de commitar
+          # YAML quebrado e descobrir só quando o deploy não acontecer.
+          for f in gitops/${{ inputs.gitops_path }}/deployment*.yaml; do
+            python3 -c "import yaml,sys; yaml.safe_load(open('$f'))" || {
+              echo "::error::YAML inválido após atualizar a tag em $f"; exit 1; }
           done
 
       - name: Commit and push
