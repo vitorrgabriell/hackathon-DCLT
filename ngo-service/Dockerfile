@@ -1,5 +1,5 @@
 
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     opentelemetry-bootstrap -a install
 
-FROM python:3.11-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 RUN groupadd --system --gid 1000 app && \
     useradd --system --uid 1000 --gid app --no-create-home app

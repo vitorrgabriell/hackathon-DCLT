@@ -1,0 +1,21 @@
+# Exceções de vulnerabilidade — risco aceito conscientemente, com justificativa.
+# Toda entrada aqui deve ter: por que não dá pra corrigir, qual o risco real, e
+# qual a condição de saída. Sem isso, vira tapete pra varrer CVE pra baixo.
+
+# CVE-2026-0994 — protobuf 4.25.9 (DoS por bypass de profundidade de recursão)
+#
+# Por que não corrigimos agora: a correção está em protobuf >= 5.29.6, mas o
+# opentelemetry-proto 1.27.0 declara `protobuf<5.0,>=3.19`. São mutuamente
+# exclusivos — corrigir exige subir toda a stack OpenTelemetry de forma
+# coordenada (distro + instrumentation + exporter), que também esbarra na
+# restrição do setuptools<81 (o opentelemetry-bootstrap 0.48b0 depende de
+# pkg_resources, removido no setuptools 81).
+#
+# Risco real: baixo neste contexto. O protobuf só é exercitado no caminho de
+# EXPORTAÇÃO de telemetria (app -> OTel Collector, dentro do cluster), não em
+# entrada vinda do usuário. Um atacante precisaria já estar dentro da rede do
+# cluster e conseguir injetar payload malformado no pipeline de telemetria.
+#
+# Condição de saída: upgrade coordenado da stack OpenTelemetry Python
+# (rastreado como próximo passo técnico). Reavaliar nesse momento.
+CVE-2026-0994

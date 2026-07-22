@@ -150,6 +150,13 @@ jobs:
           image-ref: ${{ steps.meta.outputs.image_uri }}
           severity: CRITICAL,HIGH
           exit-code: "1"
+          # ignore-unfixed: falha só no que é acionável. As bases Debian/Alpine
+          # carregam CVEs sem patch publicado (ex: 24 no ngo-service); sem isso o
+          # gate fica permanentemente vermelho por algo que ninguém pode
+          # corrigir — e um gate sempre vermelho treina o time a ignorá-lo.
+          # Exceções pontuais e justificadas ficam no .trivyignore da raiz.
+          ignore-unfixed: true
+          trivyignores: .trivyignore
 
       - name: Docker Push
         run: |

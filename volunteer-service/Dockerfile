@@ -1,5 +1,5 @@
 
-FROM python:3.12-alpine AS builder
+FROM python:3.13-alpine AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     opentelemetry-bootstrap -a install
 
-FROM python:3.12-alpine AS runtime
+FROM python:3.13-alpine AS runtime
 
 RUN addgroup -S -g 1000 app && \
     adduser -S -u 1000 -G app -H app
